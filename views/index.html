@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <link href="/css/main.css" rel="stylesheet"/>
+    <!--<link href="/css/yummly.css" rel="stylesheet"/>-->
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+</head>
+<body>
+    <div id="content">
+        <div id="navigation">
+            <table>
+                <tbody>
+                <tr>
+                    <td class="logo-wrap">
+                        <a href="/" id="logo">
+                            <img height="32" src="http://fastly-static.yummly.com/yummly-website/80e54082e96d2ca95127c3fda6125e15f2d63a52/img/yummly.png" width="88">
+                        </a>
+                        <span id="menu-logo" class="ninja-menu">
+                            <div class="ninja-arrow-down"></div>
+                        </span>
+                    </td>
+                    <td class="y-flex">
+                        <div id="menu-browse" class="ninja-menu">
+                            <span class="nav-size browse">导航</span>
+                            <div class="ninja-arrow-down"></div></div>
+                    </td>
+                    <td class="login-state">
+                        <form method="get" action="/login">
+                            <button type="submit" class="yummly-login-sheet btn-oauth">创建新账号</button>
+                            <button type="submit" class="yummly-login-sheet btn-secondary">登陆</button>
+                            <input type="hidden" name="button" value="login">
+                        </form>
+                    </td>
+                    <td><a href="#" class="panel-right-toggle" id="button-filters"><span class="y-icon">&amp;</span></a></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function(){
+            var request = $.ajax({
+                url: "http://localhost:3000/user.register",
+                type: "POST",
+                data: { id : 'sdf' },
+                dataType: "json"
+            });
+        })
+    </script>
+</body>
+</html>
