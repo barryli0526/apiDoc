@@ -6,10 +6,12 @@
  * To change this template use File | Settings | File Templates.
  */
 
-var service = require('../service').ArticleService;
+//var service = require('../service').ArticleService;
 
 var http = require('http');
 var querystring = require('querystring');
+var userService = require('../service').UserService;
+var util = require('../lib/util');
 
 //service.CreateArticle
 
@@ -23,24 +25,26 @@ var testRegister = function(){
 
 
     var post_data = JSON.stringify({
-        nickname:'user23',
-        loginname:'user23',
-        email:'sf@df.com',
+        nickname:'user1',
+        loginname:'user1',
+
         pass:123
     });
 
 
 
     var options = {
-        host: '127.0.0.1',
-        port: 3000,
+        host: 'apidoc.ap01.aws.af.cm',
+        port: 80,
         path: '/user.register',
         method: 'POST',
         headers :{
+            'Content-length':100,
             'Content-Type' : 'application/json'
         }
     };
-
+  //  console.log(options);
+  //  console.log(post_data);
     var req = http.request(options, function(res) {
         console.log('STATUS: ' + res.statusCode);
         console.log('HEADERS: ' + JSON.stringify(res.headers));
@@ -53,8 +57,10 @@ var testRegister = function(){
   //  console.log(post_data);
 
     req.write(post_data);
+    //req.write("sdfsdf");
 
     req.end();
+    console.log("tes11t");
 
 }
 
@@ -75,6 +81,7 @@ var testLogin = function(){
             'Content-Type' : 'application/json'
         }
     };
+
 
     var req = http.request(options, function(res) {
         console.log('STATUS: ' + res.statusCode);
@@ -101,7 +108,7 @@ var testFollow = function(){
 
 
     var options = {
-        host: '127.0.0.1',
+        host: '121.199.58.200',
         port: 3000,
         path: '/user.follow',
         method: 'POST',
@@ -126,5 +133,9 @@ var testFollow = function(){
     req.end();
 }
 
-
-testFollow();
+userService.getUserDetailByUids('529eedcf7ea8157c28000001',function(err,docs){
+  //  console.log(docs[0]);
+    var target = [] ;
+    util.fetchJSON(target, docs, require('../apidoc/apiReturnType/user').USER);
+    console.log(target);
+})

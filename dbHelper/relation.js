@@ -27,7 +27,20 @@ exports.getAllFollowings = function (followId, callback) {
  * @param callback
  */
 exports.getFollowings = function (followId, pageSize, pageIndex, callback) {
-    Relation.find({follow_id: followId}).skip(pageSize*pageIndex).limit(pageSize)
+
+    var skip, limit;
+    if(typeof(pageSize) === "function"){
+        callback = pageSize;
+        skip = {};
+        limit = {};
+    }else{
+        var listCount = pageSize ? (pageSize) : 10000;
+        pageIndex = pageIndex > 0 ? (pageIndex): 0;
+        skip = pageIndex*listCount;
+        limit = listCount;
+    }
+
+    Relation.find({follow_id: followId}).skip(skip).limit(limit)
         .exec(function(err, docs){
             if(err || !docs){
                 return callback(err, null);
@@ -43,7 +56,20 @@ exports.getFollowings = function (followId, pageSize, pageIndex, callback) {
  * @param callback
  */
 exports.getFollowers = function (userId, pageSize, pageIndex, callback) {
-  Relation.find({user_id: userId}).skip(pageSize*pageIndex).limit(pageSize)
+
+    var skip, limit;
+    if(typeof(pageSize) === "function"){
+        callback = pageSize;
+        skip = {};
+        limit = {};
+    }else{
+        var listCount = pageSize ? (pageSize) : 10000;
+        pageIndex = pageIndex > 0 ? (pageIndex): 0;
+        skip = pageIndex*listCount;
+        limit = listCount;
+    }
+
+    Relation.find({user_id: userId}).skip(skip).limit(limit)
     .exec(function(err, docs){
         if(err || !docs){
             return callback(err, null);
@@ -62,6 +88,10 @@ exports.getAllFollowers = function (userId, callback) {
     Relation.find({user_id: userId}, callback);
 };
 
+exports.getRelationShip = function(uid, fid, callback){
+    Relation.find({user_id:uid, follow_id:fid}, callback);
+}
+
 /**
  * 创建新的关注关系
  * @param {ID} userId 被关注人的id
@@ -69,10 +99,21 @@ exports.getAllFollowers = function (userId, callback) {
  * @param callback
  */
 exports.newAndSave = function (userId, followId, callback) {
-  var relation = new Relation();
-  relation.user_id = userId;
-  relation.follow_id = followId;
-  relation.save(callback);
+
+  exports.getRelationShip(userId, followId, function(err, relation){
+      if(err){
+          return callback(err);
+      }
+      if(relation && relation.length != 0){
+          return callback('已经关注');
+      }else{
+
+          var relation = new Relation();
+          relation.user_id = userId;
+          relation.follow_id = followId;
+          relation.save(callback);
+      }
+  })
 };
 
 /**

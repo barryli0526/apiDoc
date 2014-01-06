@@ -503,3 +503,9 @@ html #content
 {
     display: none !important;
 }
+
+#testArea
+{
+    position:absolute;
+    top:100px;
+}

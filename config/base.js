@@ -23,8 +23,8 @@ exports.config = {
     //theme:'default',
 
     db: 'mongodb://127.0.0.1/oneApp',
-    session_secret: 'dida',
-    auth_cookie_name: 'dida',
+    session_secret: 'oneApp',
+    auth_cookie_name: 'oneApp',
     port: 3000,
 
     // 话题列表显示的话题数量

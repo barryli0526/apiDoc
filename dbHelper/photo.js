@@ -7,3 +7,18 @@
  */
 var models = require('../models');
 var Photo = models.Photo;
+
+
+exports.newPhoto = function(userId, data, callback){
+    var photo = new Photo();
+    photo.author_id = userId;
+    for(var i in data){
+        photo[i] = data[i];
+    }
+    photo.save(callback);
+}
+
+
+exports.getPhotoById = function(photoId, callback){
+    photo.find({_id:photoId}, callback);
+}

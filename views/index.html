@@ -4,7 +4,9 @@
     <title></title>
     <link href="/css/main.css" rel="stylesheet"/>
     <!--<link href="/css/yummly.css" rel="stylesheet"/>-->
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="/js/jquery.fileupload.js"></script>
 </head>
 <body>
     <div id="content">
@@ -37,15 +39,306 @@
                 </tbody>
             </table>
         </div>
+        <div id="testArea">
+            <fieldset>
+                <legend>用户api</legend>
+                <ul id="uList"></ul>
+                <button id="getAllUsers">获取所有用户(无需登录)</button>
+                <button id="getAllFollowers">获取所有粉丝(必须登录)</button>
+                <button id="getAllFollowings">获取所有关注对象(必须登录)</button>
+                <button id="getDetail">获取基本信息(必须登录)</button>
+            </fieldset>
+
+            <fieldset>
+                <legend>图文api</legend>
+                <form method="post" enctype="multipart/form-data" action='/photo/upload'>
+                    <input id="fileupload" type="file" name="files[]" multiple/>
+                    <button id="upload" type='submit'>上传</button>
+                </form>
+
+            </fieldset>
+
+            <fieldset>
+                <legend>文章</legend>
+                <ul id="aList"></ul>
+                <button id="getLatestArticles">获取最新的文章</button>
+            </fieldset>
+
+        </div>
     </div>
     <script>
+        String.prototype.format = function(args) {
+            var result = this;
+            if (arguments.length > 0) {
+                if (arguments.length == 1 && typeof (args) == "object") {
+                    for (var key in args) {
+                        if(args[key]!=undefined){
+                            var reg = new RegExp("({" + key + "})", "g");
+                            result = result.replace(reg, args[key]);
+                        }
+                    }
+                }
+                else {
+                    for (var i = 0; i < arguments.length; i++) {
+                        if (arguments[i] != undefined) {
+
+                            var reg= new RegExp("({)" + i + "(})", "g");
+                            result = result.replace(reg, arguments[i]);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
+
         $(document).ready(function(){
+
+            var post_data = {
+                uName:'user23',
+                pwd:123
+            };
+
+            $.ajaxSetup({cache:false});
+
+            function getAll(){
+                LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
+                $.ajax({
+                    url:"http://localhost:3000/user/getAll",
+                    type:"GET",
+                    success:function(data){
+
+                        var str = "";
+                        var guanzhu = "关注";
+                        data.forEach(function(doc,i){
+                            var user = {};
+                            if(typeof(doc.user) === 'undefined'){
+                                guanzhu = "关注";
+                                user = doc;
+                            }else{
+                                if(doc.following){
+                                    guanzhu = "取消关注"
+                                }else{
+                                    guanzhu = "关注";
+                                }
+                                 user = doc.user;
+                            }
+
+                            str +=  LI.format(user._id, user.nickname,guanzhu);
+                        })
+
+                        $("#uList").html(str);
+
+                        $('.gz').on("click", function(){
+                            //  event.preventDefault();
+                            var uid = $(this).closest('li').find('a').attr('uid');
+                            //  console.log(uid);
+                            var data = {UID:uid};
+
+                            var value = $(this).text();
+
+
+
+                            if(value == '关注'){
+                                $.ajax({
+                                    url:"http://localhost:3000/user.follow",
+                                    type:"POST",
+                                    data:data,
+                                    dataType:"json",
+                                    success:function(data){
+                                        //  alert('sdf');
+                                        location.href = location.href;
+                                    }
+                                })
+                            }else{
+                                $.ajax({
+                                    url:"http://localhost:3000/user.unfollow",
+                                    type:"POST",
+                                    data:data,
+                                    dataType:"json",
+                                    success:function(data){
+                                        //   alert('as');
+                                        location.href = location.href;
+                                    }
+                                })
+                            }
+
+                        })
+
+                        $('.getDetailInfo').on("click", function(){
+                            var uid = $(this).closest('li').find('a').attr('uid');
+                            //  console.log(uid);
+
+                            var str = '';
+                            LI = '<li>{0}:&nbsp;&nbsp;{1}</li>'
+                            $.ajax({
+                                url: "http://localhost:3000/user.detail?UID="+uid,
+                                type: "get",
+                                success:function(data){
+
+                                    if(data && data.status == 'failure'){
+                                        alert('必须先登录!');
+                                        return;
+                                    }
+
+                                    for(var key in data[0]){
+                                        str +=  LI.format(key, data[0][key]);
+                                    }
+
+                                    data.forEach(function(user, i){
+                                        var s = '';
+                                        for(var key in user){
+                                            s += LI.format(key, user[key]);
+                                        }
+                                        str = '<li><ul>' + s + '</ul></li>';
+                                    })
+
+                                    $("#uList").html(str);
+                                }
+                            })
+                        })
+
+                    }
+                })
+            }
+
+            var LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
+
             var request = $.ajax({
-                url: "http://localhost:3000/user.register",
+                url: "http://localhost:3000/user.signIn",
                 type: "POST",
-                data: { id : 'sdf' },
-                dataType: "json"
+                data: post_data,
+                dataType: "json",
+                success:function(data){
+                   getAll();
+                }
             });
+
+            $("#getAllFollowers").click(function(){
+                var str = '';
+                $.ajax({
+                    url: "http://localhost:3000/user/getFollowers",
+                    type: "get",
+                    success:function(data){
+                        if(data && data.status == 'failure'){
+                            alert('必须先登录!');
+                            return;
+                        }
+
+                        data.forEach(function(doc,i){
+                            if(doc.following){
+                                guanzhu = "取消关注"
+                            }else{
+                                guanzhu = "关注";
+                            }
+                            var user = doc.user;
+                            str +=  LI.format(user._id, user.nickname,guanzhu);
+                        })
+                        $("#uList").html(str);
+                    },
+                    error:function(d){
+                        console.log(d);
+                    }
+                })
+            })
+
+            $("#getAllFollowings").click(function(){
+                var str = '';
+                $.ajax({
+                    url: "http://localhost:3000/user/getFollowings",
+                    type: "get",
+                    success:function(data){
+
+                        if(data && data.status == 'failure'){
+                            alert('必须先登录!');
+                            return;
+                        }
+
+                        data.forEach(function(user,i){
+                            str +=  LI.format(user._id, user.nickname,'取消关注');
+                        })
+                        $("#uList").html(str);
+                    }
+                })
+            })
+
+            $("#getAllUsers").click(function(){
+                getAll();
+            })
+
+            $("#getDetail").click(function(){
+                var str = '';
+                LI = '<li>{0}:&nbsp;&nbsp;{1}</li>'
+                $.ajax({
+                    url: "http://localhost:3000/user.detail",
+                    type: "get",
+                    success:function(data){
+
+                        if(data && data.status == 'failure'){
+                            alert('必须先登录!');
+                            return;
+                        }
+
+                        for(var key in data[0]){
+                            str +=  LI.format(key, data[0][key]);
+                        }
+
+                        data.forEach(function(user, i){
+                            var s = '';
+                            for(var key in user){
+                                s += LI.format(key, user[key]);
+                            }
+                            str = '<li><ul>' + s + '</ul></li>';
+                        })
+
+                        $("#uList").html(str);
+                    }
+                })
+            })
+
+            function upload(){
+                var input1 = $("#fileupload");
+                var url = '/photo/upload';
+                input1.fileupload({
+                    url: url,
+                    dataType: 'json',
+                    done: function (e, data) {
+                          console.log('sdfsdf');
+                        if(data.result.status === 'success' && data.result.url) {
+                            var url = data.result.url;
+                            if(typeof(url) === 'string')
+                                input.value = url;
+                            else{
+                                var str = '';
+                                url.forEach(function(doc,i){
+                                    if(i!=0)
+                                        str+=',';
+                                    str += doc.toString();
+                                })
+                                input.value = str;
+                            }
+                        }
+                        else
+                            alert('上传失败');
+                    }
+                });
+            }
+
+            $("#upload").click(function(e){
+                //e.preventDefault();
+                //upload();
+            })
+
+            $("#getLatestArticles").click(function(){
+                $.ajax({
+                    url: "http://localhost:3000/post/latest",
+                    type: "GET",
+                    dataType: "json",
+                    success:function(data){
+
+                     //  console.log(data.user);
+                    }
+                })
+            })
         })
     </script>
 </body>

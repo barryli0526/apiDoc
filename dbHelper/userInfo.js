@@ -1,7 +1,7 @@
 var models = require('../models');
 var UserInfo = models.UserInfo;
 var User = require('./user');
-var util = require('../lib/util');
+//var util = require('../lib/util');
 
 
 /*
@@ -51,7 +51,12 @@ var deleteCount = function(userid, typeName, callback){
         if(err || !userinfo){
             return callback(err, null);
         }else{
-            userinfo[typeName] -= 1;
+            if(userinfo[typeName] >=0){
+                userinfo[typeName] -= 1;
+            }
+            else{
+                userinfo[typeName] = 0;
+            }
             userinfo.save(callback);
         }
     })
@@ -180,4 +185,22 @@ exports.newAndSave = function(userid, callback){
             userinfo.save(callback);
         }
     })
+}
+
+/**
+ * 通过userId 获取用户相关信息
+ * @param userid
+ * @param callback
+ */
+exports.getByUidS = function(userids, callback){
+
+   UserInfo.find({user_id: {$in:userids}}, function(err, userInfo){
+       if(err){
+           return callback(err, null);
+       }else if(!userInfo || userInfo.length == 0){
+           return callback(null,[]);
+       }else{
+           return callback(null, userInfo);
+       }
+   })
 }

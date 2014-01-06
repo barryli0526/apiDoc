@@ -245,6 +245,12 @@ exports.newAndSave = function(data, callback){
     user.save(callback);
 };
 
+/**
+ * 获取用户列表
+ * @param pageIndex
+ * @param pageSize
+ * @param callback
+ */
 exports.getUserList = function(pageIndex, pageSize, callback){
 
     var skip, limit;
@@ -260,8 +266,6 @@ exports.getUserList = function(pageIndex, pageSize, callback){
     }
 
     User.find({}).skip(skip).limit(limit).exec(function(err, docs){
-        console.log(pageIndex);
-        console.log(pageSize);
         if(err || !docs){
             return callback(err, null);
         }else{
@@ -269,3 +273,6 @@ exports.getUserList = function(pageIndex, pageSize, callback){
         }
     })
 }
+
+
+

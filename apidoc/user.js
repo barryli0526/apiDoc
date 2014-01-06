@@ -6,6 +6,8 @@
  * To change this template use File | Settings | File Templates.
  */
 var userService = require('../service/UserService');
+var apiSchema = require('../apidoc/apiReturnType/user');
+var util = require('../lib/util');
 
 
 /**
@@ -15,23 +17,31 @@ var userService = require('../service/UserService');
  * @param next
  */
 exports.follow = function(req, res){
-    var data = req.body;
 
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
-    if(data.length == 0 || !data.UID || !data.FID){
-           res.end('{status:"failure",err:"UID and FID must be needed!"}');
+    if(!req.session.user){
+        res.send({ status: 'forbidden' });
+        return;
+    }
+    var user = req.session.user ? req.session.user : {};
+
+    var data = req.body;
+
+
+
+    if(data.length == 0 || !data.UID){
+           res.end(JSON.stringify({status:"failure",err:"UID and FID must be needed!"}));
     }else{
-        userService.FollowUser(data.UID, data.FID, function(err){
+        userService.FollowUser(data.UID, user._id, function(err){
             if(err){
-                res.end('{status:"failure",err:'+err+'}');
+                res.end( JSON.stringify({status:"failure",err:err}));
             }else{
-                res.end('{status:"success"}');
+                res.end( JSON.stringify({status:'success'}));
             }
         })
     }
-
 }
 
 
@@ -41,18 +51,27 @@ exports.follow = function(req, res){
  * @param res
  */
 exports.unfollow = function(req, res){
-    var data = req.body;
+
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
-    if(data.length == 0 || !data.UID || !data.FID){
-        res.end('{status:"failure",err:"UID and FID must be needed!"}');
+    if(!req.session.user){
+        res.send({ status: 'forbidden' });
+        return;
+    }
+    var user = req.session.user ? req.session.user : {};
+
+
+    var data = req.body;
+
+    if(data.length == 0 || !data.UID){
+        res.end(JSON.stringify({status:"failure",err:"UID and FID must be needed!"}));
     }else{
-        userService.unFollowUser(data.UID, data.FID, function(err){
+        userService.unFollowUser(data.UID, user._id, function(err){
             if(err){
-                res.end('{status:"failure",err:"unknown db error"}');
+                res.end( JSON.stringify({status:"failure",err:err}));
             }else{
-                res.end('{status:"success"}');
+                res.end( JSON.stringify({status:'success'}));
             }
         })
     }
@@ -72,12 +91,14 @@ exports.login = function(req, res){
     res.statusCode=200;
 
     if(!data || !data.uName || !data.pwd){
-        res.end('{status:"failure",err:"username and password must be needed!"}');
+        res.end(JSON.stringify({status:"failure",err:"username and password must be needed!"}));
     }else{
         userService.SignIn(data.uName, data.pwd, function(err, user){
-            if(err){
-                res.end('{status:"failure",err:' + err + '}');
+            if(err || !user){
+                res.end( JSON.stringify({status:"failure",err:err}));
             }else{
+                //write cookie
+                util.gen_session(user, res);
                 res.write(JSON.stringify(user));
                 res.end();
             }
@@ -103,11 +124,11 @@ exports.register = function(req, res){
     res.statusCode=200;
 
     if(!data || !data.loginname || !data.pass){
-        res.end('{status:"failure",err:"username and password must be needed!"}');
+        res.end(JSON.stringify({status:"failure",err:"username and password must be needed! data is'+data.loginname+'"}));
     }else{
         userService.SignUp(data, function(err, user){
             if(err){
-                res.end('{status:"failure",err:' + err + '}');
+                res.end( JSON.stringify({status:"failure",err:err}));
             }else{
                 res.write(JSON.stringify(user));
                 res.end();
@@ -122,20 +143,24 @@ exports.register = function(req, res){
  * @param res
  */
 exports.getFollowerList = function(req, res){
-    var query = req.query;
+    var query = req.query ? req.query : {};
 
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
-    if(!query || !query.UID){
-        res.end('{status:"failure",err:"user id must be needed!"}');
+    var user = req.session.user ? req.session.user : {};
+
+    var uid =  query.UID ? query.UID : user._id;
+
+    if(!uid){
+        res.end(JSON.stringify({status:"failure",err:"user id must be needed!"}));
     }else{
         var listSize = query.listSize ? query.listSize : 10000;
         var listIndex = query.listIndex ? query.listIndex : 0;
 
-        userService.getFollowerList(query.UID, listIndex, listSize, function(err,users){
+        userService.getFollowerList(uid, listSize, listIndex, function(err,users){
             if(err){
-                res.end('{status:"failure",err:' + err + '}');
+                res.end( JSON.stringify({status:"failure",err:err}));
             }else{
                 res.write(JSON.stringify(users));
                 res.end();
@@ -150,20 +175,24 @@ exports.getFollowerList = function(req, res){
  * @param res
  */
 exports.getFollowingList = function(req, res){
-    var query = req.query;
+    var query = req.query ? req.query : {};
 
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
-    if(!query || !query.UID){
-        res.end('{status:"failure",err:"user id must be needed!"}');
+    var user = req.session.user ? req.session.user : {};
+
+    var uid =  query.UID ? query.UID : user._id;
+
+    if(!uid){
+        res.end( JSON.stringify({status:"failure",err:"user id must be needed!"}));
     }else{
         var listSize = query.listSize ? query.listSize : 10000;
         var listIndex = query.listIndex ? query.listIndex : 0;
 
-        userService.getFollowingList(query.UID, listSize, listIndex, function(err,users){
+        userService.getFollowingList(uid, listSize, listIndex, function(err,users){
             if(err){
-                res.end('{status:"failure",err:' + err + '}');
+                res.end( JSON.stringify({status:"failure",err:err}));
             }else{
                 res.write(JSON.stringify(users));
                 res.end();
@@ -180,20 +209,89 @@ exports.getFollowingList = function(req, res){
  */
 exports.getUserList = function(req, res){
 
-    var query = req.query;
+    var query = req.query ? req.query : {};
 
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
+    var user = req.session.user ? req.session.user : {};
+
+    var uid =  query.UID ? query.UID : user._id;
+
     var listSize = query.listSize ? query.listSize : 10000;
     var listIndex = query.listIndex ? query.listIndex : 0;
 
-    userService.getUserList(listSize, listIndex, function(err, users){
-         if(err){
-             res.end('{status:"failure",err:' + err + '}');
-         }else{
-             res.write(JSON.stringify(users));
-             res.end();
-         }
-    })
+    if(!uid){
+        userService.getUserList(listSize, listIndex, function(err, users){
+            if(err){
+                res.end( JSON.stringify({status:"failure",err:err}));
+            }else{
+                res.write(JSON.stringify(users));
+                res.end();
+            }
+        })
+    }else{
+        userService.getUserListByUID(user._id, listSize, listIndex, function(err, users){
+            if(err){
+                res.end( JSON.stringify({status:"failure",err:err}));
+            }else{
+                res.write(JSON.stringify(users));
+                res.end();
+            }
+        })
+    }
+
+
+
+}
+
+
+
+/**
+ * 查看是否follow某个用户
+ * @param req
+ * @param res
+ */
+exports.isFollow = function(req, res){
+    var query =req.query;
+
+    if( !query || !query.UID || !query.FID){
+        res.end( JSON.stringify({status:"failure",err:"UID and FID must be needed!"}));
+    }else{
+        userService.checkIfFollowed(data.UID, data.FID, function(err){
+            if(err){
+                res.end( JSON.stringify({status:"failure",err:err}));
+            }else{
+                res.end('{status:"success"}');
+            }
+        })
+    }
+}
+
+
+exports.getUserInfo = function(req, res){
+    var query = req.query ? req.query : {};
+
+    res.setHeader("Content-Type","application/json;charset='utf-8'");
+    res.statusCode=200;
+
+    var user = req.session.user ? req.session.user : {};
+
+    var uid =  query.UID ? query.UID : user._id;
+
+    if(!uid){
+        res.end( JSON.stringify({status:"failure",err:"user id must be needed!"}));
+    }else{
+        userService.getUserDetailByUids(uid, function(err, docs){
+            if(err){
+                res.end( JSON.stringify({status:"failure",err:err}));
+            }else{
+
+                var target = [] ;
+                util.fetchJSON(target, docs,apiSchema.USER);
+                res.end(JSON.stringify(target));
+            }
+        })
+    }
+
 }

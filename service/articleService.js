@@ -169,6 +169,28 @@ exports.getArticleOfUser = function(loginname, pageSize, pageIndex, callback){
     })
 }
 
+/**
+ * 通过用户ID获取文章列表
+ * @param userId
+ * @param pageSize
+ * @param pageIndex
+ * @param callback
+ */
+exports.getAritleListOfUserId = function(userId, pageSize, pageIndex, callback){
+    if(typeof(userId) === 'string'){
+        userId = new ObjectId();
+    }
+
+    Article.getArticlesByAuthorId(userId, pageSize, pageIndex, function(err, docs){
+        if(err){
+            return callback(Message.Db.default, null);
+        }
+
+        FillContent(docs, callback);
+    })
+
+}
+
 
 /**
  * 根据返回的文章列表一次获取文章相关信息，如作者等

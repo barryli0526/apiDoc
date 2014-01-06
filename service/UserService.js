@@ -23,8 +23,8 @@ exports.SignIn = function(loginname, pass, callback){
             return callback(Message.Db.default);
         }
 
-        if(!user){
-            return callback(null,null,Message.User.signin_error);
+        if(!user || user.length == 0){
+            return callback(Message.User.signin_error,null);
         }
 
         //不处理更新成功或失败
@@ -40,7 +40,7 @@ exports.SignIn = function(loginname, pass, callback){
  * @param loginname
  * @param callback
  */
-exports.getUserProfile = function(loginname, callback){
+exports.getUserProfileByName = function(loginname, callback){
     User.getUserByLoginName(loginname, function(err, user){
         if(err){
             return callback(Message.Db.default);
@@ -52,6 +52,44 @@ exports.getUserProfile = function(loginname, callback){
 
         return callback(null, user);
     })
+}
+
+/**
+ * 通过uid或者一组uid获取用户的详细信息
+ * @param uid
+ * @param callback
+ */
+exports.getUserDetailByUids = function(uids, callback){
+   if(typeof (uids) === 'string'){
+       uids = new ObjectId(uids);
+   }
+   if(!(uids instanceof Array)){
+       uids = [uids];
+   }
+
+    var proxy = new EventProxy();
+    var events = ['user','userInfo'];
+
+    proxy.assign(events, function(users,userInfos){
+        var infos = {};
+        for(var i=0;i<userInfos.length;i++){
+           infos[userInfos[i].user_id] = userInfos[i];
+        }
+        var us = [];
+
+        for(var i=0;i<users.length;i++){
+
+            us[i] = util.extend(true,users[i],infos[users[i]._id]);
+        }
+        return callback(null, us);
+    }).fail(callback);
+
+
+   User.getUsersByIds(uids, proxy.done('user'));
+
+   UserInfo.getByUidS(uids, proxy.done('userInfo'));
+
+
 }
 
 /**
@@ -250,8 +288,8 @@ exports.unFollowUser = function(userid, followerid, callback){
     var proxy = new EventProxy();
     var events = ['deleteFollowing','deleteFollower'];
 
-    proxy.assign(events, function(err){
-        return callback(err);
+    proxy.assign(events, function(){
+        return callback(null);
     })
 
     Relation.remove(userid, followerid, function(err){
@@ -289,7 +327,9 @@ exports.getFollowerList = function(userid,pageSize, pageIndex, callback){
 
         //文章内容填充完毕，返回
         proxy.after('user_ready',docs.length,function(){
-            return callback(null, users);
+          //  return callback(null, users);
+
+            return FillUserWithRelation(userid, users, callback);
         });
 
         docs.forEach(function(doc, i){
@@ -321,7 +361,6 @@ exports.getFollowingList = function(userid,pageSize, pageIndex, callback){
     if(typeof(userid) === "string"){
         userid =  new ObjectId(userid);
     }
-
     Relation.getFollowings(userid, pageSize, pageIndex, function(err, docs){
         if(err){
             return callback(err);
@@ -341,8 +380,8 @@ exports.getFollowingList = function(userid,pageSize, pageIndex, callback){
         });
 
         docs.forEach(function(doc, i){
-
-            User.getOneById(doc.follow_id, function(err, user){
+          //   console.log(doc);
+            User.getOneById(doc.user_id, function(err, user){
                 if(err){
                     users[i] = {status:'failure',error:err};
 
@@ -357,7 +396,143 @@ exports.getFollowingList = function(userid,pageSize, pageIndex, callback){
     })
 }
 
-
+/**
+ * 获取用户列表
+ * @param pageIndex
+ * @param pageSize
+ * @param callback
+ */
 exports.getUserList = function(pageIndex, pageSize, callback){
     User.getUserList(pageSize, pageIndex, callback);
+}
+
+function FillUserWithRelation(userId, users, callback){
+    if(typeof(userId) === 'string'){
+        userId = new ObjectId(userId);
+    }
+
+    exports.getFollowingList(userId, function(err, docs){
+
+        function checkIsExist(uid){
+            for(var j=0;j<docs.length;j++){
+                if(uid.toString() == docs[j].user_id.toString()){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        var arr = [];
+
+        var proxy = new EventProxy();
+
+        proxy.after('user_ready', users.length, function(){
+            return callback(null, arr);
+        })
+
+        users.forEach(function(user, i){
+            var info = {};
+
+            info.user = user;
+
+            if(checkIsExist(user._id)){
+                info.following = true;
+            }else{
+                info.following = false;
+            }
+
+            arr[i] = info;
+
+            proxy.emit('user_ready');
+        });
+
+
+    })
+
+}
+
+
+
+exports.getUserListByUID = function(userId, pageIndex, pageSize, callback){
+    if(typeof(userId) === 'string'){
+        userId = new ObjectId(userId);
+    }
+
+    var proxy = new EventProxy();
+
+    User.getUserList(pageSize, pageIndex, function(err, users){
+
+        exports.getFollowingList(userId, function(err, docs){
+
+            var arr = [];
+
+           // console.log(docs);
+
+            function checkIsExist(uid){
+                for(var j=0;j<docs.length;j++){
+                    if(uid.toString() == docs[j].user_id.toString()){
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            proxy.after('user_ready', users.length, function(){
+                return callback(err, arr);
+            })
+
+
+            users.forEach(function(user, i){
+
+                var info = {};
+
+                info.user = user;
+
+                if(checkIsExist(user._id)){
+                    info.following = true;
+                }else{
+                    info.following = false;
+                }
+
+                arr[i] = info;
+
+                proxy.emit('user_ready');
+            });
+
+        })
+    });
+
+
+
+
+}
+
+
+
+/**
+ * 判断是否已经follow了用户,false为未关注，true已关注
+ * @param userid
+ * @param followid
+ * @param callback
+ */
+exports.checkIfFollowed = function(userid, followid, callback){
+
+    if(typeof(userid) === "string"){
+        userid =  new ObjectId(userid);
+    }
+
+    if(typeof(followid) === "string"){
+        followid =  new ObjectId(followid);
+    }
+
+    Relation.getRelationShip(userid, followid, function(err, user){
+        if(err){
+            return callback(err);
+        }
+        if(!user){
+            return callback(null,false);
+        }else{
+            return callback(null,true);
+        }
+    });
 }

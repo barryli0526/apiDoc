@@ -1,7 +1,7 @@
 ﻿var models = require('../models');
 var Article = models.Article;
 var User = require('./user');
-var Util = require('../lib/util');
+//var Util = require('../lib/util');
 var Comment = require('./comment');
 var config = require('../config/base').config;
 
