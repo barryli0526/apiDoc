@@ -34,6 +34,8 @@ var UserSchema = new Schema({
     receive_at_mail: { type: Boolean, default: false }
 });
 
+UserSchema.set('toObject', { virtuals: true });
+
 mongoose.model('User', UserSchema);
 
 

@@ -25,7 +25,7 @@ app.configure(function(){
         app.use(express.urlencoded());
         app.use(express.cookieParser());
         app.use(express.session({ secret: config.session_secret}));
-
+        app.use('/upload/', express.static(config.upload_dir, { maxAge: config.image_maxAge }));
       //  app.use(express.session({
       //      secret: config.session_secret
      //   }));

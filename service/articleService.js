@@ -12,7 +12,7 @@ var Message = require('../config/message').Message;
 var util = require('../lib/util');
 var CategoryService = require('./CategoryService');
 var CommentService = require('./CommentService');
-var EventProxy = require('EventProxy');
+var EventProxy = require('eventproxy');
 
 /**
  * 新建一篇文章

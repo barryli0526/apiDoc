@@ -2,13 +2,14 @@ var fs = require('fs');
 var path = require('path');
 var ndir = require('ndir');
 var config = require('../config/base').config;
-var EventProxy = require('EventProxy');
+var EventProxy = require('eventproxy');
 var multipart = require("multipart");
+var util = require('../lib/util');
 
 
 
 exports.uploadImage = function(req, res, next){
-    console.log('begin upload');
+   // console.log('begin upload');
     if (!req.session || !req.session.user) {
         res.send({ status: 'forbidden' });
         return;
@@ -17,7 +18,7 @@ exports.uploadImage = function(req, res, next){
     var files = req.files.files ;
 
     if (!files) {
-        res.send({ status: 'failed', message: 'no file' });
+        res.send(util.combineFailureRes('no files'));
         return;
     }
     var uid = req.session.user._id.toString();
@@ -33,7 +34,7 @@ exports.uploadImage = function(req, res, next){
 
         proxy.after('filesave_ready',files.length,function(){
 
-            res.send({ status: 'success', url: urls });
+            res.send(util.combineSuccessRes(urls));
 
         }).fail(next);
 

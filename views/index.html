@@ -3,6 +3,7 @@
 <head>
     <title></title>
     <link href="/css/main.css" rel="stylesheet"/>
+    <link href="/css/bootstrap.min.css" rel="stylesheet"/>
     <!--<link href="/css/yummly.css" rel="stylesheet"/>-->
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
     <script type="text/javascript" src="/js/jquery.ui.widget.js"></script>
@@ -28,11 +29,11 @@
                             <div class="ninja-arrow-down"></div></div>
                     </td>
                     <td class="login-state">
-                        <form method="get" action="/login">
-                            <button type="submit" class="yummly-login-sheet btn-oauth">创建新账号</button>
-                            <button type="submit" class="yummly-login-sheet btn-secondary">登陆</button>
-                            <input type="hidden" name="button" value="login">
-                        </form>
+                        <!--<form method="get" action="/login">-->
+                            <button class="yummly-login-sheet btn-oauth" data-toggle="modal" data-target="#Regist">创建新账号</button>
+                        <button class="yummly-login-sheet btn-oauth" data-toggle="modal" data-target="#Login">登陆</button>
+                            <!--<input type="hidden" name="button" value="login">-->
+                        <!--</form>-->
                     </td>
                     <td><a href="#" class="panel-right-toggle" id="button-filters"><span class="y-icon">&amp;</span></a></td>
                 </tr>
@@ -65,6 +66,61 @@
             </fieldset>
 
         </div>
+        <!-- Modal -->
+        <div class="modal fade" id="Login" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="LoginLabel">登陆</h4>
+                    </div>
+                    <form action="/user.signIn" method="post">
+                    <div class="modal-body">
+                       <label>用户名：</label> <input name="loginname"/>
+                        <label>密码：</label> <input name="pass"/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">返回</button>
+                        <button  type="submit" class="btn btn-primary">登陆</button>
+                    </div>
+                    </form>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+
+        <!-- Modal -->
+        <div class="modal fade" id="Regist" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="RegistLabel">登陆</h4>
+                    </div>
+                    <form action="/user.register" method="post">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">用户名</label>
+                                <input type="text" class="form-control" id="loginname" name="loginname" placeholder="输入用户名...">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">邮箱</label>
+                                <input type="email" class="form-control" id="exampleInputEmail1" name="email" placeholder="输入你的邮箱地址...">
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleInputPassword1">密码</label>
+                                <input type="password" class="form-control" name="pass" id="exampleInputPassword1" placeholder="输入密码...">
+                            </div>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">返回</button>
+                            <button  type="submit" class="btn btn-primary">注册</button>
+                        </div>
+                    </form>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+
     </div>
     <script>
         String.prototype.format = function(args) {
@@ -100,18 +156,57 @@
 
             $.ajaxSetup({cache:false});
 
+            function bindGuanzhu(){
+                $('.gz').on("click", function(){
+                    //  event.preventDefault();
+                    var uid = $(this).closest('li').find('a').attr('uid');
+                    //  console.log(uid);
+                    var data = {UID:uid};
+
+                    var value = $(this).text();
+
+
+
+                    if(value == '关注'){
+                        $.ajax({
+                            url:"http://localhost:3000/user.follow",
+                            type:"POST",
+                            data:data,
+                            dataType:"json",
+                            success:function(data){
+                                //  alert('sdf');
+                                location.href = location.href;
+                            }
+                        })
+                    }else{
+                        $.ajax({
+                            url:"http://localhost:3000/user.unfollow",
+                            type:"POST",
+                            data:data,
+                            dataType:"json",
+                            success:function(data){
+                                //   alert('as');
+                                location.href = location.href;
+                            }
+                        })
+                    }
+
+                })
+            }
+
             function getAll(){
                 LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
                 $.ajax({
                     url:"http://localhost:3000/user/getAll",
                     type:"GET",
                     success:function(data){
-
+                        data = data.data;
                         var str = "";
                         var guanzhu = "关注";
                         data.forEach(function(doc,i){
                             var user = {};
-                            if(typeof(doc.user) === 'undefined'){
+                            console.log(doc);
+                            if(typeof(doc) === 'undefined'){
                                 guanzhu = "关注";
                                 user = doc;
                             }else{
@@ -120,7 +215,7 @@
                                 }else{
                                     guanzhu = "关注";
                                 }
-                                 user = doc.user;
+                                 user = doc;
                             }
 
                             str +=  LI.format(user._id, user.nickname,guanzhu);
@@ -128,41 +223,7 @@
 
                         $("#uList").html(str);
 
-                        $('.gz').on("click", function(){
-                            //  event.preventDefault();
-                            var uid = $(this).closest('li').find('a').attr('uid');
-                            //  console.log(uid);
-                            var data = {UID:uid};
-
-                            var value = $(this).text();
-
-
-
-                            if(value == '关注'){
-                                $.ajax({
-                                    url:"http://localhost:3000/user.follow",
-                                    type:"POST",
-                                    data:data,
-                                    dataType:"json",
-                                    success:function(data){
-                                        //  alert('sdf');
-                                        location.href = location.href;
-                                    }
-                                })
-                            }else{
-                                $.ajax({
-                                    url:"http://localhost:3000/user.unfollow",
-                                    type:"POST",
-                                    data:data,
-                                    dataType:"json",
-                                    success:function(data){
-                                        //   alert('as');
-                                        location.href = location.href;
-                                    }
-                                })
-                            }
-
-                        })
+                        bindGuanzhu();
 
                         $('.getDetailInfo').on("click", function(){
                             var uid = $(this).closest('li').find('a').attr('uid');
@@ -178,6 +239,8 @@
                                     if(data && data.status == 'failure'){
                                         alert('必须先登录!');
                                         return;
+                                    }else{
+                                        data = data.data;
                                     }
 
                                     for(var key in data[0]){
@@ -214,6 +277,7 @@
             });
 
             $("#getAllFollowers").click(function(){
+                LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
                 var str = '';
                 $.ajax({
                     url: "http://localhost:3000/user/getFollowers",
@@ -222,6 +286,8 @@
                         if(data && data.status == 'failure'){
                             alert('必须先登录!');
                             return;
+                        }else{
+                            data = data.data;
                         }
 
                         data.forEach(function(doc,i){
@@ -230,10 +296,12 @@
                             }else{
                                 guanzhu = "关注";
                             }
-                            var user = doc.user;
+                            var user = doc;
                             str +=  LI.format(user._id, user.nickname,guanzhu);
                         })
+
                         $("#uList").html(str);
+                        bindGuanzhu();
                     },
                     error:function(d){
                         console.log(d);
@@ -242,6 +310,7 @@
             })
 
             $("#getAllFollowings").click(function(){
+                LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
                 var str = '';
                 $.ajax({
                     url: "http://localhost:3000/user/getFollowings",
@@ -251,12 +320,16 @@
                         if(data && data.status == 'failure'){
                             alert('必须先登录!');
                             return;
+                        }else{
+                            data = data.data;
                         }
 
                         data.forEach(function(user,i){
                             str +=  LI.format(user._id, user.nickname,'取消关注');
                         })
+
                         $("#uList").html(str);
+                        bindGuanzhu();
                     }
                 })
             })
@@ -276,6 +349,8 @@
                         if(data && data.status == 'failure'){
                             alert('必须先登录!');
                             return;
+                        }else{
+                            data = data.data;
                         }
 
                         for(var key in data[0]){
@@ -302,7 +377,7 @@
                     url: url,
                     dataType: 'json',
                     done: function (e, data) {
-                          console.log('sdfsdf');
+
                         if(data.result.status === 'success' && data.result.url) {
                             var url = data.result.url;
                             if(typeof(url) === 'string')
@@ -341,5 +416,7 @@
             })
         })
     </script>
+
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
 </body>
 </html>

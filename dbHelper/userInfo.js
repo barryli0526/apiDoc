@@ -188,7 +188,7 @@ exports.newAndSave = function(userid, callback){
 }
 
 /**
- * 通过userId 获取用户相关信息
+ * 通过userId数据 获取用户相关信息
  * @param userid
  * @param callback
  */
@@ -203,4 +203,21 @@ exports.getByUidS = function(userids, callback){
            return callback(null, userInfo);
        }
    })
+}
+
+/**
+ * 通过userId获取用户相关信息
+ * @param userid
+ * @param callback
+ */
+exports.getByUid = function(userid, callback){
+    UserInfo.findOne({user_id:userid}, function(err, userInfo){
+        if(err){
+            return callback(err, null);
+        }else if(!userInfo || userInfo.length == 0){
+            return callback(null,[]);
+        }else{
+            return callback(null, userInfo);
+        }
+    })
 }

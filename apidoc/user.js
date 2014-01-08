@@ -22,7 +22,7 @@ exports.follow = function(req, res){
     res.statusCode=200;
 
     if(!req.session.user){
-        res.send({ status: 'forbidden' });
+        res.send(util.combineFailureRes('Forbidden! You do not have permission or you do not sign in...'));
         return;
     }
     var user = req.session.user ? req.session.user : {};
@@ -32,13 +32,13 @@ exports.follow = function(req, res){
 
 
     if(data.length == 0 || !data.UID){
-           res.end(JSON.stringify({status:"failure",err:"UID and FID must be needed!"}));
+           res.end(util.combineFailureRes("UID and FID must be needed!"));
     }else{
         userService.FollowUser(data.UID, user._id, function(err){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.end( JSON.stringify({status:'success'}));
+                res.end(util.combineSuccessRes([]));
             }
         })
     }
@@ -56,7 +56,7 @@ exports.unfollow = function(req, res){
     res.statusCode=200;
 
     if(!req.session.user){
-        res.send({ status: 'forbidden' });
+        res.send(util.combineFailureRes('Forbidden! You do not have permission or you do not sign in...'));
         return;
     }
     var user = req.session.user ? req.session.user : {};
@@ -69,9 +69,9 @@ exports.unfollow = function(req, res){
     }else{
         userService.unFollowUser(data.UID, user._id, function(err){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.end( JSON.stringify({status:'success'}));
+                res.end(util.combineSuccessRes([]));
             }
         })
     }
@@ -90,16 +90,20 @@ exports.login = function(req, res){
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
-    if(!data || !data.uName || !data.pwd){
-        res.end(JSON.stringify({status:"failure",err:"username and password must be needed!"}));
+    if(!data || !data.loginname || !data.pass){
+        res.end(util.combineFailureRes("username and password must be needed!"));
     }else{
-        userService.SignIn(data.uName, data.pwd, function(err, user){
+        userService.SignIn(data.loginname, data.pass, function(err, user){
             if(err || !user){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
                 //write cookie
+
                 util.gen_session(user, res);
-                res.write(JSON.stringify(user));
+                var target = [] ;
+                target = util.fetchJSON(target, user,apiSchema.USER);
+              //  console.log(target);
+                res.write(util.combineSuccessRes(target));
                 res.end();
             }
         })
@@ -113,24 +117,21 @@ exports.login = function(req, res){
  */
 exports.register = function(req, res){
 
-
-   // console.log(req);
-   // console.log(req.body);
-   // console.log(req);
-
     var data = req.body;
 
     res.setHeader("Content-Type","application/json;charset='utf-8'");
     res.statusCode=200;
 
     if(!data || !data.loginname || !data.pass){
-        res.end(JSON.stringify({status:"failure",err:"username and password must be needed! data is'+data.loginname+'"}));
+        res.end(util.combineFailureRes('username and password must be needed!'));
     }else{
         userService.SignUp(data, function(err, user){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.write(JSON.stringify(user));
+                var target = [] ;
+                target = util.fetchJSON(target, user,apiSchema.USER);
+                res.write(util.combineSuccessRes(target));
                 res.end();
             }
         })
@@ -153,16 +154,19 @@ exports.getFollowerList = function(req, res){
     var uid =  query.UID ? query.UID : user._id;
 
     if(!uid){
-        res.end(JSON.stringify({status:"failure",err:"user id must be needed!"}));
+        res.end(util.combineFailureRes("user id must be needed!"));
     }else{
         var listSize = query.listSize ? query.listSize : 10000;
         var listIndex = query.listIndex ? query.listIndex : 0;
 
         userService.getFollowerList(uid, listSize, listIndex, function(err,users){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.write(JSON.stringify(users));
+                var target = [] ;
+                target = util.fetchJSON(target, users,apiSchema.USERLIST);
+
+                res.write(util.combineSuccessRes(target));
                 res.end();
             }
         })
@@ -185,16 +189,18 @@ exports.getFollowingList = function(req, res){
     var uid =  query.UID ? query.UID : user._id;
 
     if(!uid){
-        res.end( JSON.stringify({status:"failure",err:"user id must be needed!"}));
+        res.end(util.combineFailureRes("user id must be needed!"));
     }else{
         var listSize = query.listSize ? query.listSize : 10000;
         var listIndex = query.listIndex ? query.listIndex : 0;
 
         userService.getFollowingList(uid, listSize, listIndex, function(err,users){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.write(JSON.stringify(users));
+                var target = [] ;
+                target = util.fetchJSON(target, users,apiSchema.USERLIST);
+                res.write(util.combineSuccessRes(target));
                 res.end();
             }
         })
@@ -224,25 +230,24 @@ exports.getUserList = function(req, res){
     if(!uid){
         userService.getUserList(listSize, listIndex, function(err, users){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.write(JSON.stringify(users));
+                res.write(util.combineSuccessRes(users));
                 res.end();
             }
         })
     }else{
         userService.getUserListByUID(user._id, listSize, listIndex, function(err, users){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end(util.combineFailureRes(err));
             }else{
-                res.write(JSON.stringify(users));
+                var target = [] ;
+                target = util.fetchJSON(target, users,apiSchema.USERLIST);
+                res.write(util.combineSuccessRes(target));
                 res.end();
             }
         })
     }
-
-
-
 }
 
 
@@ -256,13 +261,13 @@ exports.isFollow = function(req, res){
     var query =req.query;
 
     if( !query || !query.UID || !query.FID){
-        res.end( JSON.stringify({status:"failure",err:"UID and FID must be needed!"}));
+        res.end(util.combineFailureRes("UID and FID must be needed!"));
     }else{
         userService.checkIfFollowed(data.UID, data.FID, function(err){
             if(err){
-                res.end( JSON.stringify({status:"failure",err:err}));
+                res.end( util.combineFailureRes(err));
             }else{
-                res.end('{status:"success"}');
+                res.end(util.combineSuccessRes([]));
             }
         })
     }
@@ -289,7 +294,8 @@ exports.getUserInfo = function(req, res){
 
                 var target = [] ;
                 util.fetchJSON(target, docs,apiSchema.USER);
-                res.end(JSON.stringify(target));
+                res.end(util.combineSuccessRes(target));
+                //res.end(JSON.stringify(target));
             }
         })
     }

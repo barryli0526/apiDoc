@@ -4,7 +4,7 @@ var UserInfo = dbHelper.UserInfo;
 var Relation = dbHelper.Relation;
 var Message = require('../config/message').Message;
 var labels = require('../config/labels').labels;
-var EventProxy = require('EventProxy');
+var EventProxy = require('eventproxy');
 var util = require('../lib/util');
 var ObjectId = require('mongoose').Types.ObjectId;
 
@@ -25,13 +25,22 @@ exports.SignIn = function(loginname, pass, callback){
 
         if(!user || user.length == 0){
             return callback(Message.User.signin_error,null);
+        }else{
+            var us = {};
+            ///us = user;
+           // us.push(user);
+            UserInfo.getByUid(user._id, function(err, info){
+                us = util.extend(true,user,info);
+              //  console.log(us);
+                return callback(null, us) ;
+            })
         }
 
         //不处理更新成功或失败
         User.UpdateLoginTime(user);
 
         //直接返回信息,不需要等待更新完成
-        return callback(null, user);
+      //  return callback(null, user);
     })
 }
 
@@ -71,6 +80,7 @@ exports.getUserDetailByUids = function(uids, callback){
     var events = ['user','userInfo'];
 
     proxy.assign(events, function(users,userInfos){
+
         var infos = {};
         for(var i=0;i<userInfos.length;i++){
            infos[userInfos[i].user_id] = userInfos[i];
@@ -80,6 +90,7 @@ exports.getUserDetailByUids = function(uids, callback){
         for(var i=0;i<users.length;i++){
 
             us[i] = util.extend(true,users[i],infos[users[i]._id]);
+
         }
         return callback(null, us);
     }).fail(callback);
@@ -376,7 +387,8 @@ exports.getFollowingList = function(userid,pageSize, pageIndex, callback){
 
         //文章内容填充完毕，返回
         proxy.after('user_ready',docs.length,function(){
-            return callback(null, users);
+            //return callback(null, users);
+            return FillUserWithRelation(userid, users, callback);
         });
 
         docs.forEach(function(doc, i){
@@ -433,13 +445,21 @@ function FillUserWithRelation(userId, users, callback){
         users.forEach(function(user, i){
             var info = {};
 
-            info.user = user;
+//            info.user = user;
+//
+//            if(checkIsExist(user._id)){
+//                info.following = true;
+//            }else{
+//                info.following = false;
+//            }
 
+            info = util.extend(true,info,user);
             if(checkIsExist(user._id)){
                 info.following = true;
             }else{
                 info.following = false;
             }
+           // console.log(info);
 
             arr[i] = info;
 
@@ -452,7 +472,13 @@ function FillUserWithRelation(userId, users, callback){
 }
 
 
-
+/**
+ * 通过用户id获取用户列表，并附带关注与否的信息
+ * @param userId
+ * @param pageIndex
+ * @param pageSize
+ * @param callback
+ */
 exports.getUserListByUID = function(userId, pageIndex, pageSize, callback){
     if(typeof(userId) === 'string'){
         userId = new ObjectId(userId);
@@ -486,14 +512,23 @@ exports.getUserListByUID = function(userId, pageIndex, pageSize, callback){
 
                 var info = {};
 
-                info.user = user;
+//                info.user = user;
+//
+//                if(checkIsExist(user._id)){
+//                    info.following = true;
+//                }else{
+//                    info.following = false;
+//                }
+//
+//                arr[i] = info;
 
+                info = util.extend(true,info,user);
                 if(checkIsExist(user._id)){
                     info.following = true;
                 }else{
                     info.following = false;
                 }
-
+               // console.log(info);
                 arr[i] = info;
 
                 proxy.emit('user_ready');

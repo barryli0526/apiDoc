@@ -10,7 +10,7 @@
 var PhotoWithText = require('../dbHelper/photoWithText');
 var photo = require('../dbHelper/photo');
 var quotes = require('../dbHelper/quotes');
-var EventProxy = require('EventProxy');
+var EventProxy = require('eventproxy');
 var ObjectId = require('mongoose').Types.ObjectId;
 
 exports.newPhotoWithText = function(userId, data, callback){

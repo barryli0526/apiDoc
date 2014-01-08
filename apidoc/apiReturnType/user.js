@@ -11,7 +11,7 @@ var user = {
     nickname : '',
     abstract:'一句话介绍自己',
     email : '',
-    avatar : '',
+    avatar : 'http://uyan.cc/uploads/duface.png',
     score : 0,
     follower_count : 0,
     following_count : 0,
@@ -20,8 +20,14 @@ var user = {
     collect_tag_count : 0
 };
 
-var userDetail = {
-
+var userList = {
+    _id:'',
+    nickname : '',
+    abstract:'一句话介绍自己',
+    email : '',
+    avatar : 'http://uyan.cc/uploads/duface.png',
+    following:false
 }
 
 exports.USER = user;
+exports.USERLIST = userList;
