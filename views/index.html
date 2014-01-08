@@ -169,7 +169,7 @@
 
                     if(value == '关注'){
                         $.ajax({
-                            url:"http://localhost:3000/user.follow",
+                            url:"/user.follow",
                             type:"POST",
                             data:data,
                             dataType:"json",
@@ -180,7 +180,7 @@
                         })
                     }else{
                         $.ajax({
-                            url:"http://localhost:3000/user.unfollow",
+                            url:"/user.unfollow",
                             type:"POST",
                             data:data,
                             dataType:"json",
@@ -197,7 +197,7 @@
             function getAll(){
                 LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
                 $.ajax({
-                    url:"http://localhost:3000/user/getAll",
+                    url:"/user/getAll",
                     type:"GET",
                     success:function(data){
                         data = data.data;
@@ -232,7 +232,7 @@
                             var str = '';
                             LI = '<li>{0}:&nbsp;&nbsp;{1}</li>'
                             $.ajax({
-                                url: "http://localhost:3000/user.detail?UID="+uid,
+                                url: "/user.detail?UID="+uid,
                                 type: "get",
                                 success:function(data){
 
@@ -267,7 +267,7 @@
             var LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
 
             var request = $.ajax({
-                url: "http://localhost:3000/user.signIn",
+                url: "/user.signIn",
                 type: "POST",
                 data: post_data,
                 dataType: "json",
@@ -280,7 +280,7 @@
                 LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
                 var str = '';
                 $.ajax({
-                    url: "http://localhost:3000/user/getFollowers",
+                    url: "/user/getFollowers",
                     type: "get",
                     success:function(data){
                         if(data && data.status == 'failure'){
@@ -313,7 +313,7 @@
                 LI = '<li><a href="{0}" uid="{0}">{1}</a><button class="gz">{2}</button><button class="getDetailInfo">获取详细信息</button></li>';
                 var str = '';
                 $.ajax({
-                    url: "http://localhost:3000/user/getFollowings",
+                    url: "/user/getFollowings",
                     type: "get",
                     success:function(data){
 
@@ -342,7 +342,7 @@
                 var str = '';
                 LI = '<li>{0}:&nbsp;&nbsp;{1}</li>'
                 $.ajax({
-                    url: "http://localhost:3000/user.detail",
+                    url: "/user.detail",
                     type: "get",
                     success:function(data){
 
@@ -405,7 +405,7 @@
 
             $("#getLatestArticles").click(function(){
                 $.ajax({
-                    url: "http://localhost:3000/post/latest",
+                    url: "/post/latest",
                     type: "GET",
                     dataType: "json",
                     success:function(data){
